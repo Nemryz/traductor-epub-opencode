@@ -24,6 +24,8 @@ class OpencodeProvider(TranslationProvider):
                 command = ["opencode", "run"]
         self._command = command
         self._timeout = timeout
+        from ..security.validation import check_executable
+        check_executable(command[0])
 
     @property
     def name(self) -> str:

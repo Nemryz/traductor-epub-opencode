@@ -22,8 +22,18 @@ class TranslationCache:
             return None
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            return data.get("translation")
+            if not isinstance(data, dict):
+                return None
+            translation = data.get("translation")
+            if not isinstance(translation, str):
+                return None
+            return translation
         except (json.JSONDecodeError, OSError):
+            # Limpiar entrada corrupta
+            try:
+                path.unlink()
+            except OSError:
+                pass
             return None
 
     def set(self, text: str, target_language: str, translation: str) -> None:

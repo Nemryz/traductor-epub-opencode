@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup, NavigableString
 
 from .reader import open_epub
 from .cleaner import clean_html, should_skip
-from .restorer import restore_html
+from .restorer import restore_html, sanitize_translated_html
 from .packager import repack_epub
 from ..providers.base import TranslationProvider
 from ..state.cache import TranslationCache
@@ -19,6 +19,8 @@ from ..calibre.metadata import write_metadata
 
 BLOCK_TAGS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "li", "td", "th", "blockquote", "figcaption"}
 
+_TRANSLATION_SEMAPHORE = asyncio.Semaphore(3)
+
 
 @dataclass
 class TranslationConfig:
@@ -26,6 +28,8 @@ class TranslationConfig:
     output_mode: str = "replace"
     quality_mode: str = "normal"
     cache_dir: str | Path = "translations_cache"
+    max_file_size: int = 500 * 1024 * 1024
+    read_only: bool = False
 
 
 async def translate_epub(
@@ -34,10 +38,29 @@ async def translate_epub(
     provider: TranslationProvider,
     config: TranslationConfig,
     progress_callback=None,
+    timeout: float = 3600.0,
 ) -> Path:
     # Traduce un EPUB y escribe el resultado en output_path
     input_path = Path(input_path)
     output_path = Path(output_path)
+    async with _TRANSLATION_SEMAPHORE:
+        return await asyncio.wait_for(
+            _translate_epub_inner(input_path, output_path, provider, config, progress_callback),
+            timeout=timeout,
+        )
+
+
+async def _translate_epub_inner(
+    input_path: Path,
+    output_path: Path,
+    provider: TranslationProvider,
+    config: TranslationConfig,
+    progress_callback=None,
+) -> Path:
+    # Logica interna de traduccion
+    from ..security.validation import check_file_size
+
+    check_file_size(input_path.stat().st_size)
 
     book = open_epub(str(input_path))
     cache = TranslationCache(config.cache_dir)
@@ -75,7 +98,11 @@ async def translate_epub(
             result = clean_html(element)
             if not result.text.strip():
                 continue
-            detect_prompt_injection(result.text)
+            injection = detect_prompt_injection(result.text)
+            if injection:
+                raise ValueError(
+                    f"Se detecto posible prompt injection en el capitulo {idx}: {injection}"
+                )
 
             cached = cache.get(result.text, config.target_language)
             if cached is not None:
@@ -94,6 +121,15 @@ async def translate_epub(
                 cache.set(result.text, config.target_language, translated_text)
 
             restored = restore_html(translated_text, result)
+            restored = sanitize_translated_html(restored)
+
+            # Validacion estricta del HTML restaurado
+            from lxml import etree as lxml_et
+            try:
+                lxml_et.fromstring(f"<root>{restored}</root>")
+            except lxml_et.XMLSyntaxError:
+                raise ValueError(f"HTML restaurado invalido en capitulo {idx}")
+
             element.clear()
             element.append(NavigableString(restored))
 
@@ -104,14 +140,21 @@ async def translate_epub(
             progress_callback(idx + 1, total)
 
     book.close()
-    repack_epub(str(input_path), translated, str(output_path))
 
-    try:
-        await write_metadata(output_path, language=config.target_language)
-    except Exception:
-        pass
+    if not config.read_only:
+        repack_epub(str(input_path), translated, str(output_path))
+        try:
+            await write_metadata(output_path, language=config.target_language)
+        except Exception:
+            pass
 
     if job.is_complete():
         job.cleanup()
+
+    # Log de auditoria
+    import logging
+    logging.getLogger("traductor").info(
+        f"Traduccion completada: {input_path} -> {output_path} idioma={config.target_language}"
+    )
 
     return output_path

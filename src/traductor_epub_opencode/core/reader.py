@@ -14,6 +14,8 @@ from xml.etree import ElementTree as ET
 
 from lxml import etree as lxml_et
 
+from ..security.validation import validate_zip_entry_path, validate_zip_integrity, detect_drm
+
 
 # El patron busca el charset declarado en las primeras dos variantes del meta tag
 # de HTML: <meta charset="UTF-8"> del estandar HTML5 y el mas antiguo
@@ -187,6 +189,7 @@ def _opf_base_dir(opf_path: str) -> str:
 def _resolve_href(base_dir: str, href: str) -> str:
     combined = base_dir + href
     normalized = str(PurePosixPath(combined).resolve()).lstrip("/")
+    validate_zip_entry_path(normalized)
     return normalized
 
 
@@ -290,15 +293,12 @@ def open_epub(path: str) -> EpubBook:
     zf = zipfile.ZipFile(path, "r")
     names = set(zf.namelist())
 
-    # La ausencia de META-INF/container.xml es el indicador mas confiable de que un archivo
-    # tiene DRM, porque la proteccion digital cifra o reemplaza los archivos internos del
-    # EPUB de forma que la estructura estandar no existe. Detectarlo aqui permite dar un
-    # mensaje de error claro al usuario en lugar de fallar con una excepcion criptografica.
-    if "META-INF/container.xml" not in names:
+    validate_zip_integrity(zf)
+
+    if detect_drm(zf):
         zf.close()
         raise ValueError(
-            "El archivo no contiene META-INF/container.xml. "
-            "Probablemente tiene DRM (proteccion digital) o esta corrupto."
+            "El archivo tiene DRM (proteccion digital) y no puede procesarse."
         )
 
     opf_path = _find_opf_path(zf)

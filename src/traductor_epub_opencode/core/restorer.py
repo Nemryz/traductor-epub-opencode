@@ -157,6 +157,15 @@ def count_token_mismatches(translated_text: str, result: CleanResult) -> int:
     return len(expected - found)
 
 
+def sanitize_translated_html(html: str) -> str:
+    # Remueve tags no esperados del HTML traducido
+    import re as _re
+    html = _re.sub(r"<script.*?</script>", "", html, flags=_re.DOTALL | _re.IGNORECASE)
+    html = _re.sub(r"<style.*?</style>", "", html, flags=_re.DOTALL | _re.IGNORECASE)
+    html = _re.sub(r"\s+on\w+\s*=\s*[\"'][^\"']*[\"']", "", html, flags=_re.IGNORECASE)
+    return html
+
+
 # ----------------------------------------------------------------------------
 # Nota para implementaciones futuras: estrategias de recuperacion ante errores
 # del modelo de traduccion identificadas al analizar repositorios de referencia.
