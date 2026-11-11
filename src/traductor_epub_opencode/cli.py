@@ -2,6 +2,8 @@
 
 import argparse
 import asyncio
+import logging
+import sys
 from pathlib import Path
 
 from .core.glossary import load_glossary
@@ -34,7 +36,27 @@ def build_parser() -> argparse.ArgumentParser:
         default=0,
         help="Umbral de tokens para agrupar fragmentos. Cero desactiva la agrupacion.",
     )
+    parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="No escribe el EPUB de salida ni actualiza metadatos.",
+    )
+    parser.add_argument(
+        "--audit-log",
+        default="audit.log",
+        help="Ruta del archivo de log de auditoria.",
+    )
     return parser
+
+
+def _setup_logging(audit_log: str) -> None:
+    # Configura el logger de auditoria para escribir en archivo y consola
+    logger = logging.getLogger("traductor")
+    logger.setLevel(logging.INFO)
+    if not logger.handlers:
+        file_handler = logging.FileHandler(audit_log, encoding="utf-8")
+        file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        logger.addHandler(file_handler)
 
 
 async def run(args) -> None:
@@ -58,16 +80,32 @@ async def run(args) -> None:
         cache_dir=args.cache_dir,
         glossary=glossary_text,
         max_group_tokens=args.group_tokens,
+        read_only=args.read_only,
     )
     result = await translate_epub(input_path, output_path, provider, config)
     print(f"Traduccion completada: {result}")
 
 
-def main() -> None:
+def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
-    asyncio.run(run(args))
+    try:
+        _setup_logging(args.audit_log)
+        asyncio.run(run(args))
+    except FileNotFoundError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except ValueError as exc:
+        print(f"Error de validacion: {exc}", file=sys.stderr)
+        return 2
+    except RuntimeError as exc:
+        print(f"Error del proveedor: {exc}", file=sys.stderr)
+        return 3
+    except Exception as exc:  # noqa: BLE001
+        print(f"Error inesperado: {exc}", file=sys.stderr)
+        return 4
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
