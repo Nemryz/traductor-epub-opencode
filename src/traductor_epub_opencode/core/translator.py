@@ -130,8 +130,19 @@ async def _translate_epub_inner(
             except lxml_et.XMLSyntaxError:
                 raise ValueError(f"HTML restaurado invalido en capitulo {idx}")
 
-            element.clear()
-            element.append(NavigableString(restored))
+            if config.output_mode == "bilingual_inline":
+                element.clear()
+                element.append(NavigableString(f"{result.text} {restored}"))
+            elif config.output_mode == "bilingual_block":
+                element.clear()
+                element.append(NavigableString(restored))
+                new_p = soup.new_tag("p")
+                new_p["class"] = "translation"
+                new_p.append(NavigableString(restored))
+                element.insert_after(new_p)
+            else:
+                element.clear()
+                element.append(NavigableString(restored))
 
         translated[chapter.zip_path] = str(soup).encode("utf-8")
         job.mark_completed(idx)
