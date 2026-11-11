@@ -1,0 +1,51 @@
+# Entorno virtual de Python
+venv/
+.venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Archivos de entorno (contienen secretos)
+.env
+.env.local
+.env.*.local
+
+# Directorios de trabajo del bot y traducciones
+downloads/
+translations_cache/
+*.db
+*.sqlite
+*.sqlite3
+
+# Archivos de salida temporales
+*.epub.tmp
+*.tmp
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editores e IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+
+# Distribucion y build
+dist/
+build/
+*.egg-info/
+.eggs/
+
+# Nota: .opencode y .serena NO se excluyen porque son parte del entorno de opencode
