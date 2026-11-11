@@ -1,0 +1,1 @@
+"""Estado y cache del traductor de EPUB."""

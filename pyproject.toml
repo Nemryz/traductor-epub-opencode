@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traductor-epub-opencode"
+version = "0.1.0"
+description = "Traduce libros electronicos usando opencode como motor de inferencia"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "aiofiles>=23.0.0",
+]
+
+[project.scripts]
+traductor-epub = "traductor_epub_opencode.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
