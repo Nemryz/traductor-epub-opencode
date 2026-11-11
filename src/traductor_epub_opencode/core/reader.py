@@ -187,8 +187,9 @@ def _opf_base_dir(opf_path: str) -> str:
 # Por ejemplo, si el OPF esta en OEBPS/ y un href dice ../images/cover.jpg, la ruta
 # resuelta debe ser images/cover.jpg, no OEBPS/../images/cover.jpg.
 def _resolve_href(base_dir: str, href: str) -> str:
+    import posixpath
     combined = base_dir + href
-    normalized = str(PurePosixPath(combined).resolve()).lstrip("/")
+    normalized = posixpath.normpath(combined).lstrip("/")
     validate_zip_entry_path(normalized)
     return normalized
 
