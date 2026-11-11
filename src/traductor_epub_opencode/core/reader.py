@@ -203,7 +203,9 @@ def _parse_meta(root: ET.Element) -> EpubMeta:
     ns_dc = "{http://purl.org/dc/elements/1.1/}"
     ns_opf = "{http://www.idpf.org/2007/opf}"
 
-    metadata = root.find(f"{ns_opf}metadata") or root.find("metadata")
+    metadata = root.find(f"{ns_opf}metadata")
+    if metadata is None:
+        metadata = root.find("metadata")
     if metadata is None:
         return meta
 
@@ -232,7 +234,9 @@ def _parse_meta(root: ET.Element) -> EpubMeta:
 # su href, de manera que se necesita el diccionario para resolver la cadena spine -> id -> href.
 def _parse_manifest(root: ET.Element, ns_opf: str) -> dict[str, dict]:
     manifest: dict[str, dict] = {}
-    manifest_el = root.find(f"{ns_opf}manifest") or root.find("manifest")
+    manifest_el = root.find(f"{ns_opf}manifest")
+    if manifest_el is None:
+        manifest_el = root.find("manifest")
     if manifest_el is None:
         return manifest
     for item in manifest_el:
@@ -251,7 +255,9 @@ def _parse_manifest(root: ET.Element, ns_opf: str) -> dict[str, dict]:
 # principal. Se excluyen para no traducir contenido que el usuario final probablemente
 # nunca vera en el flujo normal de lectura.
 def _parse_spine(root: ET.Element, ns_opf: str) -> list[str]:
-    spine_el = root.find(f"{ns_opf}spine") or root.find("spine")
+    spine_el = root.find(f"{ns_opf}spine")
+    if spine_el is None:
+        spine_el = root.find("spine")
     if spine_el is None:
         return []
     idrefs = []
