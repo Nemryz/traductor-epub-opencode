@@ -10,13 +10,13 @@ async def convert_to_epub(
     input_path: str | Path, output_path: str | Path, timeout: float = 300.0
 ) -> Path:
     # Convierte un archivo a EPUB usando ebook-convert. Devuelve la ruta de salida
-    from ..security.validation import check_executable
-
-    check_executable("ebook-convert")
     input_path = Path(input_path)
     output_path = Path(output_path)
     if input_path.suffix.lower() not in SUPPORTED_INPUTS:
         raise ValueError(f"Formato no soportado: {input_path.suffix}")
+    from ..security.validation import check_executable
+
+    check_executable("ebook-convert")
     proc = await asyncio.create_subprocess_exec(
         "ebook-convert",
         str(input_path),

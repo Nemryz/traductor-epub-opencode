@@ -24,8 +24,9 @@ def test_convert_unsupported_format(tmp_path):
         pass
 
 
+@patch("traductor_epub_opencode.security.validation.check_executable")
 @patch("traductor_epub_opencode.calibre.converter.asyncio.create_subprocess_exec")
-def test_convert_success(mock_exec, tmp_path):
+def test_convert_success(mock_exec, mock_check, tmp_path):
     mock_proc = AsyncMock()
     mock_proc.communicate.return_value = (b"", b"")
     mock_proc.returncode = 0
