@@ -31,8 +31,6 @@ El proyecto usa ruff para linting y formateo. Antes de enviar un cambio, ejecuta
     venv\Scripts\ruff check src tests
     venv\Scripts\ruff format src tests
 
-Las reglas de estilo para los archivos del proyecto son las siguientes. El texto en espanol. Las oraciones en prosa no terminan con punto y coma ni con dos puntos. Las citas usan comillas simples en lugar de comillas dobles. No se usan negritas ni cursivas en la prosa. La estructura es continua. Los comentarios de una sola linea con almohadilla describen lo que hace el codigo, sin docstrings. No se usan palabras reservadas como identificadores.
-
 ## Proceso de pull request
 
 Crear una rama descriptiva para cada cambio.
