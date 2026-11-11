@@ -18,6 +18,8 @@ El sistema se organiza en cinco capas desacopladas bajo el paquete traductor_epu
     │   ├── cleaner.py     (convierte HTML a texto con placeholders numerados)
     │   ├── restorer.py    (restaura placeholders, valida traduccion y sanitiza el HTML final)
     │   ├── packager.py    (reempaqueta el EPUB preservando la jerarquia)
+    │   ├── glossary.py    (carga y formatea el glosario de terminos para el prompt)
+    │   ├── grouper.py     (agrupa fragmentos por tokens estimados)
     │   └── translator.py  (orquestador que coordina todo el pipeline)
     ├── providers/
     │   ├── base.py        (clase abstracta TranslationProvider)
@@ -56,7 +58,7 @@ La traduccion de un libro sigue este camino dentro del orquestador translator.py
       ├── TranslationJob           marca el capitulo como completado para reanudacion
       └── repack_epub + write_metadata  escribe el EPUB final y actualiza metadatos
 
-El orquestador limita la concurrencia con un semaphore de tres tareas y aplica un timeout global configurable sobre toda la operacion. El modo de solo lectura evita escribir el EPUB de salida y los metadatos, util para validaciones sin efectos en disco. Al terminar se registra una linea de auditoria con archivo de entrada, archivo de salida e idioma.
+El orquestador limita la concurrencia con un semaphore de tres tareas y aplica un timeout global configurable sobre toda la operacion. El modo de solo lectura evita escribir el EPUB de salida y los metadatos, util para validaciones sin efectos en disco. Al terminar se registra una linea de auditoria con archivo de entrada, archivo de salida e idioma. El glosario opcional se inyecta en el system prompt como terminos con traduccion fija o terminos que no deben traducirse. La agrupacion opcional por tokens acumula fragmentos hasta un umbral configurable para reducir el numero de llamadas al proveedor.
 
 ---
 
@@ -71,6 +73,10 @@ El lector abre el archivo como ZIP y ejecuta tres verificaciones de seguridad an
 El limpiador recorre cada elemento de bloque del capitulo y clasifica el contenido. Los tags inline como em, strong, span y a se reemplazan por pares de tokens [T01]/[/T01] guardando la serializacion exacta del tag original con todos sus atributos. Los elementos no traducibles como img, code, pre y script se reemplazan por tokens de posicion [P01]. El resultado es un texto limpio que el modelo puede traducir sin riesgo de alterar el marcado.
 
 El restaurador realiza el proceso inverso con tres garantias. Detecta los tokens omitidos por el modelo y los registra como advertencias mediante count_token_mismatches. Restaura cada token a su HTML original usando el mapa guardado. Y aplica sanitize_translated_html sobre el resultado final, eliminando scripts, estilos, iframes y atributos de eventos, de modo que la salida no pueda inyectar codigo ejecutable en el lector del usuario. La funcion validate_translation comprueba ademas la proporcion de longitud entre original y traduccion para detectar omisiones o duplicaciones del modelo.
+
+### glossary.py y grouper.py
+
+El modulo glossary.py lee un archivo de texto con terminos y devuelve un bloque formateado para el system prompt. Las lineas con origen = destino fijan la traduccion y las lineas sueltas marcan terminos que no deben traducirse. El modulo grouper.py acumula fragmentos hasta un umbral de tokens estimados y devuelve grupos, de modo que cada llamada al proveedor lleve el maximo contexto posible sin exceder el limite.
 
 ### packager.py y translator.py
 
@@ -112,7 +118,7 @@ Los formatos MOBI, AZW3, FB2, RTF y DOCX se convierten a EPUB mediante ebook-con
 
 ## Interfaz de linea de comandos y skill
 
-La CLI traductor-epub acepta el archivo de entrada, el idioma de destino con -l, el modo de salida con -m, el nivel de calidad con -q, la ruta de salida con -o y el directorio de cache con --cache-dir. Si no se indica salida, el resultado se escribe junto al original con sufijo _translated. La skill en skill/SKILL.md permite que opencode invoque la herramienta como parte de una conversacion, y las variables de entorno OPENCODE_COMMAND, TRANSLATIONS_CACHE_DIR y DOWNLOADS_DIR configuran el comportamiento sin tocar codigo.
+La CLI traductor-epub acepta el archivo de entrada, el idioma de destino con -l, el modo de salida con -m, el nivel de calidad con -q, la ruta de salida con -o, el directorio de cache con --cache-dir, el glosario con --glossary, el umbral de agrupacion con --group-tokens, el modo de solo lectura con --read-only y la ruta del log de auditoria con --audit-log. Si no se indica salida, el resultado se escribe junto al original con sufijo _translated. La skill en skill/SKILL.md permite que opencode invoque la herramienta como parte de una conversacion, y las variables de entorno OPENCODE_COMMAND, TRANSLATIONS_CACHE_DIR y DOWNLOADS_DIR configuran el comportamiento sin tocar codigo.
 
 ---
 
@@ -124,4 +130,4 @@ Las pruebas automatizadas cubren el lector con EPUBs reales minimos, el limpiado
 
 ## Roadmap
 
-Las siguientes mejoras estan previstas sobre esta arquitectura. La inyeccion de glosario en el system prompt permitira al usuario pasar un archivo de terminos con --glossary para que el modelo respete traducciones fijas de forma contextualmente coherente. La agrupacion de fragmentos por tokens estimados reducira el numero de llamadas a opencode acumulando parrafos hasta un umbral configurable. El flag de solo lectura y el log de auditoria a archivo se expondran desde la CLI para trazabilidad completa. El manejo de errores de la CLI mejorara con mensajes accionables y codigos de salida diferenciados. La guia de contribucion documentara el estilo del codigo y el proceso de pull request. A largo plazo quedan abiertas la interfaz de Telegram como frontend del nucleo actual y los adaptadores de API keys como proveedores alternativos opcionales.
+Las siguientes mejoras estan previstas sobre esta arquitectura. El manejo de errores de la CLI puede ampliarse con mensajes accionables y codigos de salida diferenciados para cada tipo de fallo. A largo plazo quedan abiertas la interfaz de Telegram como frontend del nucleo actual y los adaptadores de API keys como proveedores alternativos opcionales. El throttling adaptativo y el monitoreo de costos pueden incorporarse si opencode impone limites de velocidad.
