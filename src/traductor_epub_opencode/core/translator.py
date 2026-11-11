@@ -29,6 +29,7 @@ class TranslationConfig:
     cache_dir: str | Path = "translations_cache"
     max_file_size: int = 500 * 1024 * 1024
     read_only: bool = False
+    glossary: str | None = None
 
 
 async def translate_epub(
@@ -77,6 +78,8 @@ async def _translate_epub_inner(
         "Preserva todos los tokens entre corchetes como [T01] o [P01] sin modificarlos. "
         "No agregues explicaciones, solo devuelve la traduccion."
     )
+    if config.glossary:
+        system_prompt = f"{system_prompt}\n\n{config.glossary}"
 
     for idx, chapter in enumerate(book.chapters):
         if idx not in job.pending_indices():

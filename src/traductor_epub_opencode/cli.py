@@ -4,6 +4,7 @@ import argparse
 import asyncio
 from pathlib import Path
 
+from .core.glossary import load_glossary
 from .core.translator import TranslationConfig, translate_epub
 from .providers.opencode import OpencodeProvider
 
@@ -23,6 +24,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("-q", "--quality", default="normal", choices=["normal", "high"])
     parser.add_argument("--cache-dir", default="translations_cache")
+    parser.add_argument(
+        "--glossary",
+        help="Ruta del archivo de glosario con terminos de traduccion fija.",
+    )
     return parser
 
 
@@ -34,11 +39,18 @@ async def run(args) -> None:
         Path(args.output) if args.output else input_path.with_stem(input_path.stem + "_translated")
     )
     provider = OpencodeProvider()
+    glossary_text = None
+    if args.glossary:
+        glossary_path = Path(args.glossary)
+        if not glossary_path.exists():
+            raise FileNotFoundError(f"Archivo de glosario no encontrado: {glossary_path}")
+        glossary_text = load_glossary(glossary_path)
     config = TranslationConfig(
         target_language=args.language,
         output_mode=args.mode,
         quality_mode=args.quality,
         cache_dir=args.cache_dir,
+        glossary=glossary_text,
     )
     result = await translate_epub(input_path, output_path, provider, config)
     print(f"Traduccion completada: {result}")
