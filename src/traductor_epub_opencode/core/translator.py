@@ -30,6 +30,7 @@ class TranslationConfig:
     max_file_size: int = 500 * 1024 * 1024
     read_only: bool = False
     glossary: str | None = None
+    max_group_tokens: int = 0
 
 
 async def translate_epub(
@@ -94,6 +95,7 @@ async def _translate_epub_inner(
             text = raw.decode("latin-1")
 
         soup = BeautifulSoup(text, "lxml")
+        items = []
         for element in soup.find_all(BLOCK_TAGS):
             if should_skip(element):
                 continue
@@ -105,11 +107,50 @@ async def _translate_epub_inner(
                 raise ValueError(
                     f"Se detecto posible prompt injection en el capitulo {idx}: {injection}"
                 )
+            items.append((element, result))
 
+        # Traduccion por fragmento, con agrupacion opcional por tokens
+        translations = [None] * len(items)
+        for i, (element, result) in enumerate(items):
             cached = cache.get(result.text, config.target_language)
             if cached is not None:
-                translated_text = cached
-            else:
+                translations[i] = cached
+
+        uncached_indices = [i for i in range(len(items)) if translations[i] is None]
+        if uncached_indices and config.max_group_tokens and config.max_group_tokens > 0:
+            from .grouper import group_fragments
+
+            uncached_texts = [items[i][1].text for i in uncached_indices]
+            groups = group_fragments(uncached_texts, config.max_group_tokens)
+            cursor = 0
+            for group in groups:
+                group_indices = uncached_indices[cursor : cursor + len(group)]
+                cursor += len(group)
+                joined = "\n\n".join(group)
+                translated_joined = await provider.translate(joined, system_prompt)
+                if config.quality_mode == "high":
+                    review_prompt = (
+                        "Revisa la siguiente traduccion. Si encuentras nombres propios "
+                        "incorrectamente traducidos, terminos del glosario no respetados, "
+                        "o frases poco naturales, devuelve la version corregida. "
+                        "Si todo esta bien, devuelve la traduccion sin cambios.\n\n"
+                        f"Original: {joined}\n\nTraduccion: {translated_joined}"
+                    )
+                    translated_joined = await provider.translate(translated_joined, review_prompt)
+                pieces = translated_joined.split("\n\n")
+                if len(pieces) != len(group):
+                    for gi, gidx in enumerate(group_indices):
+                        piece = await provider.translate(items[gidx][1].text, system_prompt)
+                        translations[gidx] = piece
+                        cache.set(items[gidx][1].text, config.target_language, piece)
+                    continue
+                for gi, gidx in enumerate(group_indices):
+                    piece = pieces[gi].strip()
+                    translations[gidx] = piece
+                    cache.set(items[gidx][1].text, config.target_language, piece)
+        elif uncached_indices:
+            for i in uncached_indices:
+                element, result = items[i]
                 translated_text = await provider.translate(result.text, system_prompt)
                 if config.quality_mode == "high":
                     review_prompt = (
@@ -120,8 +161,11 @@ async def _translate_epub_inner(
                         f"Original: {result.text}\n\nTraduccion: {translated_text}"
                     )
                     translated_text = await provider.translate(translated_text, review_prompt)
+                translations[i] = translated_text
                 cache.set(result.text, config.target_language, translated_text)
 
+        for i, (element, result) in enumerate(items):
+            translated_text = translations[i]
             restored = restore_html(translated_text, result)
             restored = sanitize_translated_html(restored)
 

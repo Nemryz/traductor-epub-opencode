@@ -28,6 +28,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--glossary",
         help="Ruta del archivo de glosario con terminos de traduccion fija.",
     )
+    parser.add_argument(
+        "--group-tokens",
+        type=int,
+        default=0,
+        help="Umbral de tokens para agrupar fragmentos. Cero desactiva la agrupacion.",
+    )
     return parser
 
 
@@ -51,6 +57,7 @@ async def run(args) -> None:
         quality_mode=args.quality,
         cache_dir=args.cache_dir,
         glossary=glossary_text,
+        max_group_tokens=args.group_tokens,
     )
     result = await translate_epub(input_path, output_path, provider, config)
     print(f"Traduccion completada: {result}")
