@@ -26,13 +26,37 @@ logger = logging.getLogger(__name__)
 # no traducibles, estos tags pueden contener otros tags inline anidados, y el
 # sistema de tokens maneja ese anidamiento correctamente porque cada nivel recibe
 # su propio par de tokens de apertura y cierre con su numero correspondiente.
-INLINE_TAGS: frozenset[str] = frozenset({
-    "a", "abbr", "acronym", "b", "bdo", "big",
-    "cite", "del", "dfn", "em", "i",
-    "ins", "kbd", "label", "mark", "q", "s", "samp",
-    "small", "span", "strong", "sub", "sup", "time",
-    "tt", "u", "var",
-})
+INLINE_TAGS: frozenset[str] = frozenset(
+    {
+        "a",
+        "abbr",
+        "acronym",
+        "b",
+        "bdo",
+        "big",
+        "cite",
+        "del",
+        "dfn",
+        "em",
+        "i",
+        "ins",
+        "kbd",
+        "label",
+        "mark",
+        "q",
+        "s",
+        "samp",
+        "small",
+        "span",
+        "strong",
+        "sub",
+        "sup",
+        "time",
+        "tt",
+        "u",
+        "var",
+    }
+)
 
 # Los tags no traducibles agrupan dos categorias de elementos. La primera son los
 # elementos visuales o autonomos que no contienen texto en lenguaje natural, como
@@ -41,26 +65,43 @@ INLINE_TAGS: frozenset[str] = frozenset({
 # codigo fuente, matematicas formales o contenido multimedia. Ambas categorias se
 # tratan igual: se reemplazan en su totalidad por un token de posicion que preserva
 # exactamente el elemento original incluyendo todos sus atributos y su contenido.
-NON_TRANSLATABLE_TAGS: frozenset[str] = frozenset({
-    "br", "hr", "img", "code", "pre", "math", "script",
-    "style", "audio", "video", "svg", "input", "button",
-    "select", "textarea", "iframe", "ruby", "rp", "rt",
-})
+NON_TRANSLATABLE_TAGS: frozenset[str] = frozenset(
+    {
+        "br",
+        "hr",
+        "img",
+        "code",
+        "pre",
+        "math",
+        "script",
+        "style",
+        "audio",
+        "video",
+        "svg",
+        "input",
+        "button",
+        "select",
+        "textarea",
+        "iframe",
+        "ruby",
+        "rp",
+        "rt",
+    }
+)
 
 
 @dataclass
 class CleanResult:
     # Encapsula el resultado de la limpieza de un elemento HTML.
-# El campo text contiene el texto con tokens listo para enviar al motor de
-# traduccion. El campo token_map registra la correspondencia entre cada token
-# y el fragmento HTML que reemplaza, de forma que el restaurador puede reconstruir
-# el HTML completo a partir de la respuesta del modelo. El campo fragment_type
-# clasifica el fragmento para que la capa de traduccion pueda seleccionar el
-# system prompt mas apropiado segun la complejidad del contenido. Los campos
-# wrap_open y wrap_close contienen la serializacion del elemento raiz que el
-# restaurador usa para envolver el texto traducido y reconstruir el elemento
-# completo con todos sus atributos originales.
-
+    # El campo text contiene el texto con tokens listo para enviar al motor de
+    # traduccion. El campo token_map registra la correspondencia entre cada token
+    # y el fragmento HTML que reemplaza, de forma que el restaurador puede reconstruir
+    # el HTML completo a partir de la respuesta del modelo. El campo fragment_type
+    # clasifica el fragmento para que la capa de traduccion pueda seleccionar el
+    # system prompt mas apropiado segun la complejidad del contenido. Los campos
+    # wrap_open y wrap_close contienen la serializacion del elemento raiz que el
+    # restaurador usa para envolver el texto traducido y reconstruir el elemento
+    # completo con todos sus atributos originales.
 
     text: str
     token_map: dict[str, str] = field(default_factory=dict)
@@ -71,11 +112,11 @@ class CleanResult:
 
 def _serialize_opening(tag: Tag) -> str:
     # Produce la serializacion de la etiqueta de apertura de un Tag de BeautifulSoup
-# incluyendo todos sus atributos con sus valores exactos. El atributo class se
-# deserializa desde la lista interna de BeautifulSoup a una cadena separada por
-# espacios, que es el formato que espera el HTML estandar. Lo mismo aplica al
-# atributo rel de los hipervinculos, que tambien se representa como lista en
-# BeautifulSoup cuando contiene multiples valores.
+    # incluyendo todos sus atributos con sus valores exactos. El atributo class se
+    # deserializa desde la lista interna de BeautifulSoup a una cadena separada por
+    # espacios, que es el formato que espera el HTML estandar. Lo mismo aplica al
+    # atributo rel de los hipervinculos, que tambien se representa como lista en
+    # BeautifulSoup cuando contiene multiples valores.
 
     attrs: list[str] = []
     for key, value in tag.attrs.items():
@@ -88,9 +129,9 @@ def _serialize_opening(tag: Tag) -> str:
 
 def _is_non_translatable(tag: Tag) -> bool:
     # Comprueba si un tag debe tratarse como elemento no traducible aunque su nombre
-# no aparezca en NON_TRANSLATABLE_TAGS, basandose en el atributo translate=no
-# del estandar HTML5 y en la clase notranslate que usan Google Translate y otras
-# herramientas de localizacion para marcar contenido que no debe procesarse.
+    # no aparezca en NON_TRANSLATABLE_TAGS, basandose en el atributo translate=no
+    # del estandar HTML5 y en la clase notranslate que usan Google Translate y otras
+    # herramientas de localizacion para marcar contenido que no debe procesarse.
 
     if tag.get("translate") == "no":
         return True
@@ -102,12 +143,12 @@ def _is_non_translatable(tag: Tag) -> bool:
 
 def clean_html(element: Tag) -> CleanResult:
     # Limpia un elemento HTML reemplazando tags inline y elementos no traducibles
-# por tokens numerados, y devuelve el texto con tokens junto con el mapa de
-# restauracion y la clasificacion del fragmento.
-# El recorrido es recursivo: cuando se encuentra un tag inline, se emite su
-# token de apertura, se recorren sus hijos con la misma logica, y luego se emite
-# su token de cierre, lo que preserva correctamente el anidamiento de tags en
-# la cadena tokenizada resultante.
+    # por tokens numerados, y devuelve el texto con tokens junto con el mapa de
+    # restauracion y la clasificacion del fragmento.
+    # El recorrido es recursivo: cuando se encuentra un tag inline, se emite su
+    # token de apertura, se recorren sus hijos con la misma logica, y luego se emite
+    # su token de cierre, lo que preserva correctamente el anidamiento de tags en
+    # la cadena tokenizada resultante.
 
     t_counter = 0
     p_counter = 0
@@ -197,10 +238,10 @@ def clean_html(element: Tag) -> CleanResult:
 
 def should_skip(element: Tag) -> bool:
     # Determina si un elemento no tiene contenido de texto que valga la pena traducir.
-# Se usa antes de llamar a clean_html para filtrar elementos vacios, elementos que
-# contienen solo espacios en blanco, y elementos cuyos unicos hijos son imagenes u
-# otros elementos no traducibles que no aportan texto al flujo de lectura. Esto evita
-# llamadas innecesarias al motor de traduccion y reduce el costo de la operacion.
+    # Se usa antes de llamar a clean_html para filtrar elementos vacios, elementos que
+    # contienen solo espacios en blanco, y elementos cuyos unicos hijos son imagenes u
+    # otros elementos no traducibles que no aportan texto al flujo de lectura. Esto evita
+    # llamadas innecesarias al motor de traduccion y reduce el costo de la operacion.
 
     return not element.get_text(strip=True)
 

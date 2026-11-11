@@ -1,8 +1,8 @@
 # Estado de trabajo por capitulo para reanudacion de traducciones
 
 import json
-from pathlib import Path
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal
 
 ChapterStatus = Literal["pending", "in_progress", "completed"]
@@ -34,17 +34,11 @@ class TranslationJob:
     def _load(self) -> None:
         data = json.loads(self._state_path.read_text(encoding="utf-8"))
         self.chapters = [
-            ChapterState(index=ch["index"], status=ch["status"])
-            for ch in data.get("chapters", [])
+            ChapterState(index=ch["index"], status=ch["status"]) for ch in data.get("chapters", [])
         ]
 
     def _save(self) -> None:
-        data = {
-            "chapters": [
-                {"index": ch.index, "status": ch.status}
-                for ch in self.chapters
-            ]
-        }
+        data = {"chapters": [{"index": ch.index, "status": ch.status} for ch in self.chapters]}
         self._state_path.write_text(
             json.dumps(data, indent=2, ensure_ascii=False),
             encoding="utf-8",

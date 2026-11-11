@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from bs4 import BeautifulSoup
+
 from traductor_epub_opencode.core.cleaner import clean_html, should_skip
 from traductor_epub_opencode.core.restorer import sanitize_translated_html, validate_translation
 

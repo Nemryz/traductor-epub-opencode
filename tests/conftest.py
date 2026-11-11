@@ -1,8 +1,6 @@
 # Configuracion compartida para las pruebas
 
-import io
 import zipfile
-from pathlib import Path
 
 import pytest
 
@@ -24,7 +22,9 @@ def make_minimal_epub(path, chapters=None):
         spine_items = ""
         for i, ch in enumerate(chapters):
             href = f"chapter{i + 1}.xhtml"
-            manifest_items += f'<item id="ch{i + 1}" href="{href}" media-type="application/xhtml+xml"/>'
+            manifest_items += (
+                f'<item id="ch{i + 1}" href="{href}" media-type="application/xhtml+xml"/>'
+            )
             spine_items += f'<itemref idref="ch{i + 1}"/>'
             zf.writestr(
                 f"OEBPS/{href}",
@@ -33,8 +33,8 @@ def make_minimal_epub(path, chapters=None):
         opf = (
             '<?xml version="1.0" encoding="utf-8"?>'
             '<package xmlns="http://www.idpf.org/2007/opf" version="3.0">'
-            "<metadata><dc:title xmlns:dc=\"http://purl.org/dc/elements/1.1/\">Test</dc:title>"
-            "<dc:language xmlns:dc=\"http://purl.org/dc/elements/1.1/\">es</dc:language></metadata>"
+            '<metadata><dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">Test</dc:title>'
+            '<dc:language xmlns:dc="http://purl.org/dc/elements/1.1/">es</dc:language></metadata>'
             f"<manifest>{manifest_items}</manifest>"
             f"<spine>{spine_items}</spine>"
             "</package>"

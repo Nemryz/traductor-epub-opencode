@@ -1,21 +1,20 @@
 # Orquestador de traduccion de EPUB
 
 import asyncio
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 from bs4 import BeautifulSoup, NavigableString
 
-from .reader import open_epub
-from .cleaner import clean_html, should_skip
-from .restorer import restore_html, sanitize_translated_html
-from .packager import repack_epub
-from ..providers.base import TranslationProvider
-from ..state.cache import TranslationCache
-from ..state.job import TranslationJob, ChapterState
-from ..security.validation import detect_prompt_injection
 from ..calibre.metadata import write_metadata
-
+from ..providers.base import TranslationProvider
+from ..security.validation import detect_prompt_injection
+from ..state.cache import TranslationCache
+from ..state.job import ChapterState, TranslationJob
+from .cleaner import clean_html, should_skip
+from .packager import repack_epub
+from .reader import open_epub
+from .restorer import restore_html, sanitize_translated_html
 
 BLOCK_TAGS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "li", "td", "th", "blockquote", "figcaption"}
 
@@ -125,6 +124,7 @@ async def _translate_epub_inner(
 
             # Validacion estricta del HTML restaurado
             from lxml import etree as lxml_et
+
             try:
                 lxml_et.fromstring(f"<root>{restored}</root>")
             except lxml_et.XMLSyntaxError:
@@ -164,6 +164,7 @@ async def _translate_epub_inner(
 
     # Log de auditoria
     import logging
+
     logging.getLogger("traductor").info(
         f"Traduccion completada: {input_path} -> {output_path} idioma={config.target_language}"
     )

@@ -6,9 +6,12 @@ from pathlib import Path
 SUPPORTED_INPUTS = {".epub", ".mobi", ".azw3", ".fb2", ".rtf", ".docx"}
 
 
-async def convert_to_epub(input_path: str | Path, output_path: str | Path, timeout: float = 300.0) -> Path:
+async def convert_to_epub(
+    input_path: str | Path, output_path: str | Path, timeout: float = 300.0
+) -> Path:
     # Convierte un archivo a EPUB usando ebook-convert. Devuelve la ruta de salida
     from ..security.validation import check_executable
+
     check_executable("ebook-convert")
     input_path = Path(input_path)
     output_path = Path(output_path)

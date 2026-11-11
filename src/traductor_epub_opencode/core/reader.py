@@ -9,13 +9,11 @@
 import re
 import zipfile
 from dataclasses import dataclass, field
-from pathlib import PurePosixPath
 from xml.etree import ElementTree as ET
 
 from lxml import etree as lxml_et
 
-from ..security.validation import validate_zip_entry_path, validate_zip_integrity, detect_drm
-
+from ..security.validation import detect_drm, validate_zip_entry_path, validate_zip_integrity
 
 # El patron busca el charset declarado en las primeras dos variantes del meta tag
 # de HTML: <meta charset="UTF-8"> del estandar HTML5 y el mas antiguo
@@ -30,11 +28,11 @@ _CHARSET_META = re.compile(
 
 def _detect_encoding(raw: bytes) -> str:
     # Detecta el charset declarado en el meta tag del HTML inspeccionando los primeros
-# dos kilobytes del documento antes de intentar decodificarlo. Si el valor declarado
-# no es un encoding reconocido por Python, o si no hay ningun meta tag de charset,
-# se usa UTF-8 como fallback porque es la codificacion obligatoria para EPUBs
-# segun la especificacion EPUB 3, aunque muchos EPUBs mas antiguos declaran ISO-8859-1
-# y los modernos editores de ebooks tambien producen UTF-8 sin declararlo explicitamente.
+    # dos kilobytes del documento antes de intentar decodificarlo. Si el valor declarado
+    # no es un encoding reconocido por Python, o si no hay ningun meta tag de charset,
+    # se usa UTF-8 como fallback porque es la codificacion obligatoria para EPUBs
+    # segun la especificacion EPUB 3, aunque muchos EPUBs mas antiguos declaran ISO-8859-1
+    # y los modernos editores de ebooks tambien producen UTF-8 sin declararlo explicitamente.
 
     match = _CHARSET_META.search(raw[:2048])
     if match:
@@ -49,12 +47,12 @@ def _detect_encoding(raw: bytes) -> str:
 
 def _parse_xml(raw: bytes) -> ET.Element:
     # Parsea un documento XML en dos intentos: primero con el parser estandar de Python
-# que es estricto con el formato, y si falla con un ParseError intenta con el parser
-# de recuperacion de lxml que tolera XML mal formado y produce un arbol parcialmente
-# correcto a partir del contenido valido que encuentra.
-# El resultado siempre es un ET.Element de la biblioteca estandar, de manera que
-# el resto del codigo no necesita saber que parser se uso y puede operar con la
-# misma API en ambos casos.
+    # que es estricto con el formato, y si falla con un ParseError intenta con el parser
+    # de recuperacion de lxml que tolera XML mal formado y produce un arbol parcialmente
+    # correcto a partir del contenido valido que encuentra.
+    # El resultado siempre es un ET.Element de la biblioteca estandar, de manera que
+    # el resto del codigo no necesita saber que parser se uso y puede operar con la
+    # misma API en ambos casos.
 
     try:
         return ET.fromstring(raw)
@@ -188,6 +186,7 @@ def _opf_base_dir(opf_path: str) -> str:
 # resuelta debe ser images/cover.jpg, no OEBPS/../images/cover.jpg.
 def _resolve_href(base_dir: str, href: str) -> str:
     import posixpath
+
     combined = base_dir + href
     normalized = posixpath.normpath(combined).lstrip("/")
     validate_zip_entry_path(normalized)
@@ -304,9 +303,7 @@ def open_epub(path: str) -> EpubBook:
 
     if detect_drm(zf):
         zf.close()
-        raise ValueError(
-            "El archivo tiene DRM (proteccion digital) y no puede procesarse."
-        )
+        raise ValueError("El archivo tiene DRM (proteccion digital) y no puede procesarse.")
 
     opf_path = _find_opf_path(zf)
     if opf_path not in names:

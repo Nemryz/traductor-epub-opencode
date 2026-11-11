@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from traductor_epub_opencode.state.cache import TranslationCache
-from traductor_epub_opencode.state.job import TranslationJob, ChapterState
+from traductor_epub_opencode.state.job import ChapterState, TranslationJob
 
 
 def test_cache_set_get():

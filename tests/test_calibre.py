@@ -1,13 +1,13 @@
 # Pruebas de Calibre con subprocess simulado
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from traductor_epub_opencode.calibre.converter import convert_to_epub, SUPPORTED_INPUTS
+from traductor_epub_opencode.calibre.converter import SUPPORTED_INPUTS, convert_to_epub
 from traductor_epub_opencode.calibre.metadata import read_metadata, write_metadata
 
 

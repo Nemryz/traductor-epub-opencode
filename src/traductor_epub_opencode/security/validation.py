@@ -45,9 +45,7 @@ def validate_zip_integrity(zf: zipfile.ZipFile) -> None:
         raise ValueError(f"El ZIP contiene demasiadas entradas: {len(entries)}")
     total_size = sum(info.file_size for info in entries)
     if total_size > MAX_UNCOMPRESSED_BYTES:
-        raise ValueError(
-            f"El tamaño descomprimido del ZIP supera el limite: {total_size} bytes"
-        )
+        raise ValueError(f"El tamaño descomprimido del ZIP supera el limite: {total_size} bytes")
 
 
 def detect_drm(zf: zipfile.ZipFile) -> bool:

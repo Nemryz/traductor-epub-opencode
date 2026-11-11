@@ -1,21 +1,21 @@
 # Pruebas de seguridad para el traductor de EPUB
 
+import io
 import sys
 import zipfile
-import io
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from traductor_epub_opencode.security.validation import (
+    MAX_FILE_SIZE_BYTES,
+    check_executable,
     check_file_size,
+    detect_drm,
+    detect_prompt_injection,
     validate_filename,
     validate_zip_entry_path,
     validate_zip_integrity,
-    detect_drm,
-    detect_prompt_injection,
-    check_executable,
-    MAX_FILE_SIZE_BYTES,
 )
 
 

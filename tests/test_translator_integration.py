@@ -1,13 +1,13 @@
 # Pruebas de integracion del orquestador de traduccion
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from traductor_epub_opencode.core.translator import translate_epub, TranslationConfig
 from tests.mock_provider import MockProvider
+from traductor_epub_opencode.core.translator import TranslationConfig, translate_epub
 
 
 def test_translate_basic(minimal_epub, tmp_path):
