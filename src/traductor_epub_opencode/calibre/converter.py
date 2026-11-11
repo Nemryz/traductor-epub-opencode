@@ -1,4 +1,4 @@
-"""Wrapper de subprocess para ebook-convert de Calibre."""
+# Wrapper de subprocess para ebook-convert de Calibre
 
 import asyncio
 from pathlib import Path
@@ -7,7 +7,7 @@ SUPPORTED_INPUTS = {".epub", ".mobi", ".azw3", ".fb2", ".rtf", ".docx"}
 
 
 async def convert_to_epub(input_path: str | Path, output_path: str | Path, timeout: float = 300.0) -> Path:
-    """Convierte un archivo a EPUB usando ebook-convert. Devuelve la ruta de salida."""
+    # Convierte un archivo a EPUB usando ebook-convert. Devuelve la ruta de salida
     input_path = Path(input_path)
     output_path = Path(output_path)
     if input_path.suffix.lower() not in SUPPORTED_INPUTS:

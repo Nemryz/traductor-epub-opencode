@@ -1,4 +1,4 @@
-"""Adaptador de opencode como proveedor de traduccion."""
+# Adaptador de opencode como proveedor de traduccion
 
 import asyncio
 import os
@@ -7,15 +7,15 @@ from .base import TranslationProvider
 
 
 class OpencodeProvider(TranslationProvider):
-    """Proveedor que invoca opencode como proceso hijo para traducir texto."""
+    # Proveedor que invoca opencode como proceso hijo para traducir texto
 
     def __init__(
         self,
         command: list[str] | None = None,
         timeout: float = 120.0,
     ) -> None:
-        # El comando por defecto invoca opencode en modo no interactivo.
-        # Se puede sobrescribir con la variable de entorno OPENCODE_COMMAND.
+        # El comando por defecto invoca opencode en modo no interactivo
+        # Se puede sobrescribir con la variable de entorno OPENCODE_COMMAND
         if command is None:
             env_cmd = os.getenv("OPENCODE_COMMAND", "")
             if env_cmd:

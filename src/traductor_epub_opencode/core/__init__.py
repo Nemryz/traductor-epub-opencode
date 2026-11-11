@@ -1,4 +1,4 @@
-"""Nucleo de procesamiento de EPUB."""
+# Nucleo de procesamiento de EPUB
 
 from .reader import open_epub, EpubBook, Chapter, EpubMeta
 from .cleaner import clean_html, should_skip, CleanResult

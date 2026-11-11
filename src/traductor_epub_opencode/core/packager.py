@@ -1,12 +1,10 @@
-"""
-Reempaquetador de EPUBs: produce el archivo de salida con los capitulos traducidos.
+# Reempaquetador de EPUBs: produce el archivo de salida con los capitulos traducidos.
+# Se encarga del ultimo paso del pipeline: tomar el EPUB original y producir un nuevo
+# archivo donde los capitulos traducidos reemplazan a los originales, mientras que el
+# resto del contenido (imagenes, CSS, fuentes, OPF, tabla de contenidos) se copia sin
+# modificacion. De esta manera el libro de salida es estructuralmente identico al original
+# y funciona correctamente en cualquier lector de ebooks.
 
-Se encarga del ultimo paso del pipeline: tomar el EPUB original y producir un nuevo
-archivo donde los capitulos traducidos reemplazan a los originales, mientras que el
-resto del contenido (imagenes, CSS, fuentes, OPF, tabla de contenidos) se copia sin
-modificacion. De esta manera el libro de salida es estructuralmente identico al original
-y funciona correctamente en cualquier lector de ebooks.
-"""
 
 import zipfile
 

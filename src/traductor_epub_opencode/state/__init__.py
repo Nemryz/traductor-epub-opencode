@@ -1,1 +1,1 @@
-"""Estado y cache del traductor de EPUB."""
+# Estado y cache del traductor de EPUB.

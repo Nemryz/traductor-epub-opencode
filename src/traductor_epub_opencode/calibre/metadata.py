@@ -1,11 +1,11 @@
-"""Wrapper de subprocess para ebook-meta de Calibre."""
+# Wrapper de subprocess para ebook-meta de Calibre
 
 import asyncio
 from pathlib import Path
 
 
 async def read_metadata(epub_path: str | Path) -> dict[str, str]:
-    """Lee metadatos del EPUB usando ebook-meta. Devuelve un diccionario."""
+    # Lee metadatos del EPUB usando ebook-meta. Devuelve un diccionario
     proc = await asyncio.create_subprocess_exec(
         "ebook-meta",
         str(epub_path),
@@ -27,7 +27,7 @@ async def write_metadata(
     language: str | None = None,
     timeout: float = 60.0,
 ) -> None:
-    """Actualiza metadatos del EPUB usando ebook-meta."""
+    # Actualiza metadatos del EPUB usando ebook-meta
     args = ["ebook-meta", str(epub_path)]
     if title:
         args += ["--title", title]

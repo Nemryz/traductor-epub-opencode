@@ -1,1 +1,1 @@
-"""Funciones de validacion y seguridad para el traductor de EPUB."""
+# Funciones de validacion y seguridad para el traductor de EPUB.

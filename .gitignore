@@ -48,4 +48,3 @@ build/
 *.egg-info/
 .eggs/
 
-# Nota: .opencode y .serena NO se excluyen porque son parte del entorno de opencode

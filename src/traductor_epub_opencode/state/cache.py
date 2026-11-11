@@ -1,4 +1,4 @@
-"""Cache de traducciones en disco indexada por hash SHA256 y codigo de idioma."""
+# Cache de traducciones en disco indexada por hash SHA256 y codigo de idioma
 
 import hashlib
 import json
@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 class TranslationCache:
-    """Guarda y recupera traducciones de fragmentos en disco."""
+    # Guarda y recupera traducciones de fragmentos en disco
 
     def __init__(self, cache_dir: str | Path = "translations_cache") -> None:
         self._dir = Path(cache_dir)

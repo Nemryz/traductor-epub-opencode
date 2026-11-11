@@ -1,16 +1,14 @@
-"""
-Restaurador de HTML: reconstruye el marcado original a partir del texto traducido y los tokens.
+# Restaurador de HTML: reconstruye el marcado original a partir del texto traducido y los tokens.
+# Su responsabilidad es el proceso inverso al del modulo epub/html_cleaner.py, es decir,
+# recibir el texto devuelto por el motor de traduccion, que contiene los mismos tokens
+# numerados que el limpiador inserto, y reemplazar cada token por el fragmento HTML que le
+# corresponde segun el mapa registrado durante la limpieza. El resultado es el elemento HTML
+# completo con el texto en la lengua destino y con todos los tags de formato, los hipervinculos
+# y los elementos no traducibles en exactamente la misma posicion relativa que tenian en el
+# original, de forma que el capitulo traducido es estructuralmente identico al original y se
+# visualiza correctamente en cualquier lector de ebooks. Este modulo trabaja siempre con un
+# CleanResult producido por html_cleaner.py y no debe usarse con datos de otra procedencia.
 
-Su responsabilidad es el proceso inverso al del modulo epub/html_cleaner.py, es decir,
-recibir el texto devuelto por el motor de traduccion, que contiene los mismos tokens
-numerados que el limpiador inserto, y reemplazar cada token por el fragmento HTML que le
-corresponde segun el mapa registrado durante la limpieza. El resultado es el elemento HTML
-completo con el texto en la lengua destino y con todos los tags de formato, los hipervinculos
-y los elementos no traducibles en exactamente la misma posicion relativa que tenian en el
-original, de forma que el capitulo traducido es estructuralmente identico al original y se
-visualiza correctamente en cualquier lector de ebooks. Este modulo trabaja siempre con un
-CleanResult producido por html_cleaner.py y no debe usarse con datos de otra procedencia.
-"""
 
 import logging
 import re
@@ -33,34 +31,30 @@ _RESIDUAL_BRACKET = re.compile(r'\[\d+\]|\[[A-Z]+\d+\]')
 
 @dataclass
 class ValidationResult:
-    """
-    Resultado de la validacion de calidad de un fragmento traducido.
+    # Resultado de la validacion de calidad de un fragmento traducido.
+# El campo is_valid indica si el fragmento paso todas las verificaciones, y el
+# campo issues lista los problemas detectados con una descripcion breve de cada
+# uno, de forma que la capa de traduccion pueda decidir si reintentar la llamada
+# al modelo o aceptar el resultado con sus limitaciones.
 
-    El campo is_valid indica si el fragmento paso todas las verificaciones, y el
-    campo issues lista los problemas detectados con una descripcion breve de cada
-    uno, de forma que la capa de traduccion pueda decidir si reintentar la llamada
-    al modelo o aceptar el resultado con sus limitaciones.
-    """
 
     is_valid: bool
     issues: list[str] = field(default_factory=list)
 
 
 def validate_translation(original_text: str, translated_text: str) -> ValidationResult:
-    """
-    Verifica la calidad de un fragmento traducido comprobando tres condiciones que
-    son indicadores confiables de respuestas defectuosas del modelo de lenguaje.
+    # Verifica la calidad de un fragmento traducido comprobando tres condiciones que
+# son indicadores confiables de respuestas defectuosas del modelo de lenguaje.
+# La primera condicion es la relacion de longitud entre la traduccion y el original:
+# si la traduccion es menos de 0.4 veces o mas de 2.5 veces la longitud del texto
+# de entrada, probablemente el modelo omitio contenido, lo duplico, o alucinó texto
+# que no estaba en el original. La segunda condicion es la presencia de corchetes con
+# numeros en el texto traducido, que indica que el modelo altero el formato de un
+# token y el restorer no pudo restaurarlo, dejando el token como texto literal. La
+# tercera condicion es que el texto traducido no termine con signo de puntuacion, lo
+# que sugiere que el modelo corto la respuesta antes de completar la ultima oracion,
+# posiblemente por haber alcanzado el limite de tokens de la llamada.
 
-    La primera condicion es la relacion de longitud entre la traduccion y el original:
-    si la traduccion es menos de 0.4 veces o mas de 2.5 veces la longitud del texto
-    de entrada, probablemente el modelo omitio contenido, lo duplico, o alucinó texto
-    que no estaba en el original. La segunda condicion es la presencia de corchetes con
-    numeros en el texto traducido, que indica que el modelo altero el formato de un
-    token y el restorer no pudo restaurarlo, dejando el token como texto literal. La
-    tercera condicion es que el texto traducido no termine con signo de puntuacion, lo
-    que sugiere que el modelo corto la respuesta antes de completar la ultima oracion,
-    posiblemente por haber alcanzado el limite de tokens de la llamada.
-    """
     issues: list[str] = []
     original_stripped = original_text.strip()
     translated_stripped = translated_text.strip()
@@ -103,14 +97,12 @@ _TOKEN_PATTERN = re.compile(r"\[/?[TP]\d+\]")
 
 
 def restore_html(translated_text: str, result: CleanResult) -> str:
-    """
-    Reconstruye el elemento HTML completo a partir del texto traducido y el CleanResult.
+    # Reconstruye el elemento HTML completo a partir del texto traducido y el CleanResult.
+# Verifica que todos los tokens del original esten presentes en la traduccion,
+# registra advertencias para los que faltan, elimina cualquier token residual
+# no reconocido que el modelo haya generado, y devuelve el HTML reconstruido
+# envuelto en la etiqueta raiz original con todos sus atributos.
 
-    Verifica que todos los tokens del original esten presentes en la traduccion,
-    registra advertencias para los que faltan, elimina cualquier token residual
-    no reconocido que el modelo haya generado, y devuelve el HTML reconstruido
-    envuelto en la etiqueta raiz original con todos sus atributos.
-    """
     expected_tokens = set(result.token_map.keys())
     found_tokens = set(_TOKEN_PATTERN.findall(translated_text))
 
@@ -154,14 +146,12 @@ def restore_html(translated_text: str, result: CleanResult) -> str:
 
 
 def count_token_mismatches(translated_text: str, result: CleanResult) -> int:
-    """
-    Cuenta la cantidad de tokens del original que no aparecen en la traduccion.
+    # Cuenta la cantidad de tokens del original que no aparecen en la traduccion.
+# Este conteo es util para la capa de traduccion, que puede usar este numero
+# para decidir si vale la pena reintentar la traduccion del fragmento con un
+# prompt mas explicito, o si la cantidad de tokens faltantes es lo suficientemente
+# baja como para aceptar el resultado con las advertencias del log.
 
-    Este conteo es util para la capa de traduccion, que puede usar este numero
-    para decidir si vale la pena reintentar la traduccion del fragmento con un
-    prompt mas explicito, o si la cantidad de tokens faltantes es lo suficientemente
-    baja como para aceptar el resultado con las advertencias del log.
-    """
     expected = set(result.token_map.keys())
     found = set(_TOKEN_PATTERN.findall(translated_text))
     return len(expected - found)

@@ -1,12 +1,10 @@
-"""
-Lector de archivos EPUB: abre el ZIP, parsea el OPF y devuelve la estructura del libro.
+# Lector de archivos EPUB: abre el ZIP, parsea el OPF y devuelve la estructura del libro.
+# Su responsabilidad es abrir un archivo EPUB, leer su estructura interna, y devolver
+# una representacion en memoria que el resto del pipeline pueda usar sin necesidad de
+# conocer nada sobre el formato ZIP ni sobre el esquema XML del OPF. Toda la logica de
+# acceso al archivo esta encapsulada aqui, de forma que si en el futuro el formato cambia
+# o se agrega soporte para una variante del estandar, solo este modulo necesita actualizarse.
 
-Su responsabilidad es abrir un archivo EPUB, leer su estructura interna, y devolver
-una representacion en memoria que el resto del pipeline pueda usar sin necesidad de
-conocer nada sobre el formato ZIP ni sobre el esquema XML del OPF. Toda la logica de
-acceso al archivo esta encapsulada aqui, de forma que si en el futuro el formato cambia
-o se agrega soporte para una variante del estandar, solo este modulo necesita actualizarse.
-"""
 
 import re
 import zipfile
@@ -29,14 +27,13 @@ _CHARSET_META = re.compile(
 
 
 def _detect_encoding(raw: bytes) -> str:
-    """
-    Detecta el charset declarado en el meta tag del HTML inspeccionando los primeros
-    dos kilobytes del documento antes de intentar decodificarlo. Si el valor declarado
-    no es un encoding reconocido por Python, o si no hay ningun meta tag de charset,
-    se usa UTF-8 como fallback porque es la codificacion obligatoria para EPUBs
-    segun la especificacion EPUB 3, aunque muchos EPUBs mas antiguos declaran ISO-8859-1
-    y los modernos editores de ebooks tambien producen UTF-8 sin declararlo explicitamente.
-    """
+    # Detecta el charset declarado en el meta tag del HTML inspeccionando los primeros
+# dos kilobytes del documento antes de intentar decodificarlo. Si el valor declarado
+# no es un encoding reconocido por Python, o si no hay ningun meta tag de charset,
+# se usa UTF-8 como fallback porque es la codificacion obligatoria para EPUBs
+# segun la especificacion EPUB 3, aunque muchos EPUBs mas antiguos declaran ISO-8859-1
+# y los modernos editores de ebooks tambien producen UTF-8 sin declararlo explicitamente.
+
     match = _CHARSET_META.search(raw[:2048])
     if match:
         declared = match.group(1).decode("ascii", errors="replace")
@@ -49,16 +46,14 @@ def _detect_encoding(raw: bytes) -> str:
 
 
 def _parse_xml(raw: bytes) -> ET.Element:
-    """
-    Parsea un documento XML en dos intentos: primero con el parser estandar de Python
-    que es estricto con el formato, y si falla con un ParseError intenta con el parser
-    de recuperacion de lxml que tolera XML mal formado y produce un arbol parcialmente
-    correcto a partir del contenido valido que encuentra.
+    # Parsea un documento XML en dos intentos: primero con el parser estandar de Python
+# que es estricto con el formato, y si falla con un ParseError intenta con el parser
+# de recuperacion de lxml que tolera XML mal formado y produce un arbol parcialmente
+# correcto a partir del contenido valido que encuentra.
+# El resultado siempre es un ET.Element de la biblioteca estandar, de manera que
+# el resto del codigo no necesita saber que parser se uso y puede operar con la
+# misma API en ambos casos.
 
-    El resultado siempre es un ET.Element de la biblioteca estandar, de manera que
-    el resto del codigo no necesita saber que parser se uso y puede operar con la
-    misma API en ambos casos.
-    """
     try:
         return ET.fromstring(raw)
     except ET.ParseError:

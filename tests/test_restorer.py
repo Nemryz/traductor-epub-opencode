@@ -1,4 +1,5 @@
-"""Pruebas para el restaurador de HTML."""
+# Pruebas para el restaurador de HTML.
+
 
 import sys
 from pathlib import Path

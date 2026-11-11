@@ -1,4 +1,4 @@
-"""Orquestador de traduccion de EPUB."""
+# Orquestador de traduccion de EPUB
 
 import asyncio
 from pathlib import Path
@@ -35,7 +35,7 @@ async def translate_epub(
     config: TranslationConfig,
     progress_callback=None,
 ) -> Path:
-    """Traduce un EPUB y escribe el resultado en output_path."""
+    # Traduce un EPUB y escribe el resultado en output_path
     input_path = Path(input_path)
     output_path = Path(output_path)
 

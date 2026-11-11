@@ -1,4 +1,5 @@
-"""Pruebas para el limpiador de HTML."""
+# Pruebas para el limpiador de HTML.
+
 
 import sys
 from pathlib import Path

@@ -1,1 +1,1 @@
-"""Proveedores de traduccion para el traductor de EPUB."""
+# Proveedores de traduccion para el traductor de EPUB.

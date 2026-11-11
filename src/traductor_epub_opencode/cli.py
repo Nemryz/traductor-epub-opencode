@@ -1,4 +1,4 @@
-"""Interfaz de linea de comandos para traductor-epub-opencode."""
+# Interfaz de linea de comandos para traductor-epub-opencode
 
 import argparse
 import asyncio

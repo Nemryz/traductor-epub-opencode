@@ -1,4 +1,4 @@
-"""Estado de trabajo por capitulo para reanudacion de traducciones."""
+# Estado de trabajo por capitulo para reanudacion de traducciones
 
 import json
 from pathlib import Path
@@ -10,7 +10,7 @@ ChapterStatus = Literal["pending", "in_progress", "completed"]
 
 @dataclass
 class ChapterState:
-    """Estado de un capitulo dentro del trabajo de traduccion."""
+    # Estado de un capitulo dentro del trabajo de traduccion
 
     index: int
     status: ChapterStatus = "pending"
@@ -18,7 +18,7 @@ class ChapterState:
 
 @dataclass
 class TranslationJob:
-    """Mantiene el estado del proceso a nivel de capitulo."""
+    # Mantiene el estado del proceso a nivel de capitulo
 
     job_dir: Path
     chapters: list[ChapterState] = field(default_factory=list)

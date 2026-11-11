@@ -1,4 +1,4 @@
-"""Validaciones de entrada y archivos para el traductor de EPUB."""
+# Validaciones de entrada y archivos para el traductor de EPUB
 
 import re
 from pathlib import PurePosixPath
@@ -7,7 +7,7 @@ MAX_FILE_SIZE_BYTES = 500 * 1024 * 1024
 
 
 def check_file_size(size_bytes: int) -> None:
-    """Lanza ValueError si el archivo supera el tamano maximo permitido."""
+    # Lanza ValueError si el archivo supera el tamano maximo permitido
     if size_bytes > MAX_FILE_SIZE_BYTES:
         raise ValueError(
             f"El archivo supera el tamano maximo permitido de {MAX_FILE_SIZE_BYTES // (1024 * 1024)} MB."
@@ -15,7 +15,7 @@ def check_file_size(size_bytes: int) -> None:
 
 
 def validate_filename(filename: str) -> None:
-    """Verifica que el nombre del archivo sea seguro para usar en disco."""
+    # Verifica que el nombre del archivo sea seguro para usar en disco
     if not filename or not filename.strip():
         raise ValueError("El nombre del archivo no puede estar vacio.")
     if len(filename) > 200:
@@ -25,7 +25,7 @@ def validate_filename(filename: str) -> None:
 
 
 def validate_zip_entry_path(zip_path: str) -> None:
-    """Verifica que la ruta de un entry dentro del ZIP no escape del directorio raiz."""
+    # Verifica que la ruta de un entry dentro del ZIP no escape del directorio raiz
     clean = str(PurePosixPath(zip_path))
     if clean.startswith("..") or clean.startswith("/"):
         raise ValueError(f"Ruta de archivo ZIP sospechosa: {zip_path!r}")
@@ -39,7 +39,7 @@ _INJECTION_PATTERNS: list[re.Pattern] = [
 
 
 def detect_prompt_injection(text: str) -> list[str]:
-    """Busca patrones de prompt injection en el texto. Devuelve la lista encontrada."""
+    # Busca patrones de prompt injection en el texto. Devuelve la lista encontrada
     found: list[str] = []
     for pattern in _INJECTION_PATTERNS:
         if pattern.search(text):
