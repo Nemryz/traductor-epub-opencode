@@ -52,7 +52,9 @@ def test_opencode_provider_failure(mock_exec):
 
 def test_cli_parser():
     parser = build_parser()
-    args = parser.parse_args(["input.epub", "-l", "en", "-q", "high", "--read-only", "--group-tokens", "500"])
+    args = parser.parse_args(
+        ["input.epub", "-l", "en", "-q", "high", "--read-only", "--group-tokens", "500"]
+    )
     assert args.language == "en"
     assert args.quality == "high"
     assert args.read_only is True
