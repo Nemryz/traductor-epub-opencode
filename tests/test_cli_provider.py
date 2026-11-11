@@ -1,15 +1,15 @@
 # Pruebas de CLI y proveedor de opencode
 
-import sys
 import asyncio
+import sys
 from pathlib import Path
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from traductor_epub_opencode.cli import build_parser, run
 from traductor_epub_opencode.providers.base import TranslationProvider
 from traductor_epub_opencode.providers.opencode import OpencodeProvider
-from traductor_epub_opencode.cli import build_parser, run
 
 
 def test_base_estimate_tokens():
